@@ -5,6 +5,13 @@ var user_post = null;
 //this function is take care when the browser is load at the beginning
 $(document).ready(function () {
     fillTodoList();
+    $("#txtInput").keyup(function (e) {
+        if (e.which == 13 ) {
+            addTodo();
+            this.value ='';
+            this.blur();
+        }
+    });
 });
 
 
@@ -57,17 +64,7 @@ function editTodoStart(id) {
     var todoELM = $("#todo_" + id);
     console.log("Editing:" + id);
     //EDIT
-    var switchToInput = function () {
-        var $input = $("<input>", {
-            val: $(this).text(),
-            type: "text",
-            rel: jQuery(this).text(),
-        });
-        $input.addClass("loadNum");
-        $(this).replaceWith($input);
-        $input.on("blur", switchToSpan);
-        $input.select();
-    };
+    var obj = todoELM.find(".todoMessage");
     var switchToSpan = function () {
         if (jQuery(this).val()) {
             var $text = jQuery(this).val();
@@ -77,12 +74,44 @@ function editTodoStart(id) {
         var $span = $("<span>", {
             text: $text,
         });
-        $span.addClass("loadNum");
+        $span.addClass("todoMessage");
         $(this).replaceWith($span);
-        $span.on("click", switchToInput);
+        var taskStatus ;
+        if (todoELM.hasClass("list-group-item-success")) {
+            taskStatus = 1;
+        } else {
+            taskStatus = 0;
+        }
+        var dataToSend = {
+            "id": id,
+            "message": todoELM.find(".todoMessage").text(),
+            "status": taskStatus,
+            "other": ""
+        }
+        
+        updateTodo(dataToSend);
     }
 
 
+    var $input = $("<input>", {
+        val: $(todoELM.find(".todoMessage")).text(),
+        type: "text",
+        width:"80%",
+        rel: jQuery(obj).text(),
+    });
+    $input.addClass("loadNum");
+    $(obj).replaceWith($input);
+
+    $input.keyup(function (e) {
+        if (e.which == 13 || e.which == 27) {
+            this.blur();
+        }
+    });
+    $input.on("click", function (e) {       //Allow clicking inside the input field
+        e.preventDefault();
+    });
+    $input.on("blur", switchToSpan);
+    $input.select();
 }
 
 function deleteTodo(id) {
@@ -127,29 +156,34 @@ function addTodo() {
 function todoDone(id) {
     console.log("Todo Done" + id);
     var todoELM = $("#todo_" + id);
-
     var taskStatus = -1;
     if (todoELM.hasClass("list-group-item-success")) {
         taskStatus = 0;
     } else {
         taskStatus = 1;
     }
-
     var dataToSend = {
         "id": id,
         "message": todoELM.find(".todoMessage").text(),
         "status": taskStatus,
         "other": ""
     }
-    $.ajax({
+
+    updateTodo(dataToSend).then(function(data){
+        todoELM.toggleClass("list-group-item-success");
+    });
+    
+}
+
+function updateTodo(todo) {
+    return $.ajax({
         url: "api/todo",
         type: "PUT",
         dataType: 'json',
         contentType: 'application/json',
-        data: JSON.stringify(dataToSend)
+        data: JSON.stringify(todo)
     })
             .done(function (html) {
-                todoELM.toggleClass("list-group-item-success");
             })
             .fail(function (xhr, status, errorThrown) {
                 console.log("Error: Unable to load postsList");

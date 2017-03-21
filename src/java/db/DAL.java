@@ -11,7 +11,7 @@ import model.*;
  */
 public class DAL {
 
-    public static String mySqlConnectionString = "jdbc:mysql://localhost/test?user=root&password=";
+    public static String mySqlConnectionString = "jdbc:mysql://localhost/test?useUnicode=yes&characterEncoding=UTF-8&user=root&password=";
 
     public static JsonArray getAllTodos() {
         String query = "Select * FROM `todo`";
